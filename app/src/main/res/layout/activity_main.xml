@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- Кнопка настроек в правом верхнем углу -->
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="⚙️"
+        android:textSize="32sp"
+        android:background="?android:attr/selectableItemBackground"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp" />
+
+    <Button
+        android:id="@+id/showWorkoutProgramsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Показать программы тренировок"
+        android:layout_marginTop="16dp"
+        android:layout_gravity="center"
+        android:padding="16dp" />
+
+
+
+    <!-- Круговой прогресс-бар -->
+    <ProgressBar
+        android:id="@+id/circularProgressBar"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        android:indeterminate="false"
+        android:max="100"
+        android:progress="0"
+        style="?android:attr/progressBarStyleHorizontal" />
+
+
+
+    <!-- Таймер -->
+    <TextView
+        android:id="@+id/timerTextView"
+        android:layout_width="142dp"
+        android:layout_height="193dp"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="8dp"
+        android:text="00:00"
+        android:textAlignment="center"
+        android:textSize="48sp" />
+
+    <!-- Количество подходов -->
+    <TextView
+        android:id="@+id/repsTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/timerTextView"
+        android:layout_centerHorizontal="true"
+        android:text="0/5"
+        android:textSize="18sp"
+        android:layout_marginTop="16dp"/>
+
+</RelativeLayout>
