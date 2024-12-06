@@ -17,7 +17,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var repsTextView: TextView
     private lateinit var settingsButton: Button
     private lateinit var progressBar: ProgressBar
-    private lateinit var showWorkoutProgramsButton: Button  // Добавляем переменную для кнопки
+    private lateinit var showWorkoutProgramsButton: Button
+    private lateinit var workoutNameTextView: TextView
+    private lateinit var setupMessageTextView: TextView  // Новое поле для сообщения
 
     private var totalTime: Long = 0
     private var remainingTime: Long = 0
@@ -34,40 +36,48 @@ class MainActivity : AppCompatActivity() {
     // Добавляем флаг для паузы
     private var isPaused = false
 
+    // Переменная для хранения названия программы
+    private var currentWorkoutName: String = "test"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         timerTextView = findViewById(R.id.timerTextView)
         repsTextView = findViewById(R.id.repsTextView)
-        settingsButton = findViewById(R.id.settingsButton)
         progressBar = findViewById(R.id.circularProgressBar)
-        showWorkoutProgramsButton = findViewById(R.id.showWorkoutProgramsButton)  // Инициализация кнопки
+        settingsButton = findViewById(R.id.settingsButton)
+        showWorkoutProgramsButton = findViewById(R.id.showWorkoutProgramsButton)
+        workoutNameTextView = findViewById(R.id.workoutNameTextView)
+        setupMessageTextView = findViewById(R.id.setupMessageTextView)  // Инициализация нового TextView
 
-        // Скрываем количество подходов и кнопку паузы до старта
+        // Скрываем количество подходов, прогресс-бар и таймер до старта
         repsTextView.visibility = View.GONE
         progressBar.visibility = View.GONE  // Прогресс-бар скрыт по умолчанию
+        timerTextView.visibility = View.GONE // Таймер скрыт до старта
+
+        // Устанавливаем начальный текст
+        setupMessageTextView.visibility = View.VISIBLE  // Показываем сообщение по умолчанию
+        setupMessageTextView.text = "Please Setup Workout Program"
 
         settingsButton.setOnClickListener {
             openSettingsDialog()
         }
 
-        // Обработчик клика на кнопку для отображения программ тренировок
         showWorkoutProgramsButton.setOnClickListener {
             pauseTimer()  // Пауза при переходе на программу тренировок
             openWorkoutPrograms()
         }
 
-        // Инициализируем звуки
-        approachCompleteSound = MediaPlayer.create(this, R.raw.approach_complete)
-        timerCompleteSound = MediaPlayer.create(this, R.raw.timer_complete)
-
         // Получаем данные из Intent, если они были переданы
         val timeInSeconds = intent.getLongExtra("timeInSeconds", 0)
         val repetitions = intent.getIntExtra("repetitions", 0)
+        val workoutProgramName = intent.getStringExtra("workoutProgramName") ?: "Workout"
 
-        // Если данные получены, запускаем таймер
+        // Если данные получены, начинаем таймер
         if (timeInSeconds > 0 && repetitions > 0) {
+            currentWorkoutName = workoutProgramName
+            workoutNameTextView.text = currentWorkoutName ?: "Workout"
             startTimer(timeInSeconds, repetitions)
         }
 
@@ -86,6 +96,8 @@ class MainActivity : AppCompatActivity() {
 
         // Устанавливаем слушатель для старта таймера
         settingsFragment.setOnStartTimerListener { timeInSeconds, repetitions ->
+            currentWorkoutName = "Custom Workout"  // Название программы
+            workoutNameTextView.text = currentWorkoutName  // Обновляем название
             startTimer(timeInSeconds, repetitions)
         }
 
@@ -109,8 +121,14 @@ class MainActivity : AppCompatActivity() {
         reps = repetitions
         currentReps = 0
 
+        // Скрываем сообщение, показываем таймер и прогресс-бар
+        setupMessageTextView.visibility = View.GONE  // Скрываем сообщение
+        workoutNameTextView.text = currentWorkoutName
+        workoutNameTextView.visibility = View.VISIBLE  // Показываем название программы
+
+        timerTextView.visibility = View.VISIBLE
         repsTextView.visibility = View.VISIBLE
-        progressBar.visibility = View.VISIBLE // Показываем прогресс-бар
+        progressBar.visibility = View.VISIBLE
 
         updateRepsDisplay()
 
@@ -126,32 +144,26 @@ class MainActivity : AppCompatActivity() {
                 val elapsedTime = System.currentTimeMillis() - startTime
                 remainingTime = totalTime - elapsedTime
 
-                // Если время вышло, завершаем подход
                 if (remainingTime <= 0) {
                     onFinish()
                     return
                 }
 
-                // Отображаем оставшееся время от начала подхода, а не от конечного
                 val timeToDisplay = remainingTime
 
-                // Обновляем прогресс с плавностью
                 val progress = ((elapsedTime.toFloat() / totalTime.toFloat()) * 100).toInt()
                 progressBar.progress = progress
 
-                // Обновляем отображение времени (секунды)
                 val seconds = (timeToDisplay / 1000) % 60
                 val minutes = (timeToDisplay / 1000) / 60
                 timerTextView.text = String.format("%02d:%02d", minutes, seconds)
 
-                // Плавное обновление каждые 10 миллисекунд
                 handler.postDelayed(this, 10)
             }
         }
     }
 
     private fun onFinish() {
-        // Воспроизводим звук при завершении подхода
         approachCompleteSound?.start()
 
         currentReps++
@@ -159,9 +171,8 @@ class MainActivity : AppCompatActivity() {
             remainingTime = totalTime
             updateRepsDisplay()
             startTime = System.currentTimeMillis()
-            handler.postDelayed(runnable, 0) // Запуск следующего подхода
+            handler.postDelayed(runnable, 0)
         } else {
-            // Воспроизводим звук при завершении таймера
             timerCompleteSound?.start()
             resetTimer()
         }
@@ -171,34 +182,35 @@ class MainActivity : AppCompatActivity() {
         isRunning = false
         isPaused = true
         handler.removeCallbacks(runnable)
+        timerTextView.text = "II"  // Пауза отображается как II
     }
 
     private fun resumeTimer() {
         isRunning = true
         isPaused = false
-        startTime = System.currentTimeMillis() - (totalTime - remainingTime) // Сохраняем оставшееся время
-        handler.postDelayed(runnable, 0) // Возобновляем обновление прогресса
+        startTime = System.currentTimeMillis() - (totalTime - remainingTime)
+        handler.postDelayed(runnable, 0)
+        updateTimerDisplay()  // Восстанавливаем отображение времени
     }
 
     private fun resetTimer() {
         isRunning = false
-        isPaused = false
-        handler.removeCallbacks(runnable)
-        remainingTime = 0
-        currentReps = 0
-        timerTextView.text = "00:00"
+        setupMessageTextView.visibility = View.VISIBLE  // Показываем сообщение снова
+        setupMessageTextView.text = "Please Setup Workout Program"  // Текст по умолчанию
+        timerTextView.visibility = View.GONE
         repsTextView.visibility = View.GONE
-        progressBar.visibility = View.GONE // Скрыть прогресс-бар
+        progressBar.visibility = View.GONE
+    }
+
+    // Обновление отображения времени при возобновлении таймера
+    private fun updateTimerDisplay() {
+        val timeToDisplay = remainingTime
+        val seconds = (timeToDisplay / 1000) % 60
+        val minutes = (timeToDisplay / 1000) / 60
+        timerTextView.text = String.format("%02d:%02d", minutes, seconds)
     }
 
     private fun updateRepsDisplay() {
         repsTextView.text = "$currentReps/$reps"
-    }
-
-    override fun onStop() {
-        super.onStop()
-        // Освобождаем ресурсы после завершения работы
-        approachCompleteSound?.release()
-        timerCompleteSound?.release()
     }
 }

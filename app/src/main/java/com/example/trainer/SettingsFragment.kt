@@ -1,11 +1,13 @@
 package com.example.trainer.com.example.trainer
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import com.example.trainer.R
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
@@ -31,10 +33,22 @@ class SettingsFragment : BottomSheetDialogFragment() {
         resetButtonInSettings = view.findViewById(R.id.resetButtonInSettings)  // Инициализируем кнопку Reset
 
         startButtonInSettings.setOnClickListener {
+            // Получаем введенные значения
             val timeInSeconds = timeEditText.text.toString().toLongOrNull() ?: 30L
             val repetitions = repsEditText.text.toString().toIntOrNull() ?: 5
-            onStartTimer?.invoke(timeInSeconds, repetitions)
-            dismiss()  // Закрываем меню после нажатия на кнопку
+
+            // Логируем полученные значения
+            Log.d("SettingsFragment", "timeInSeconds: $timeInSeconds, repetitions: $repetitions")
+
+            // Валидация
+            if (timeInSeconds > 10 && repetitions > 2) {
+                Log.d("SettingsFragment", "Validation passed!")
+                onStartTimer?.invoke(timeInSeconds, repetitions)
+                dismiss()  // Закрываем меню после нажатия на кнопку
+            } else {
+                // Показываем ошибку, если данные не прошли валидацию
+                Toast.makeText(requireContext(), "Please ensure time > 10 seconds and reps > 2", Toast.LENGTH_SHORT).show()
+            }
         }
 
         resetButtonInSettings.setOnClickListener {

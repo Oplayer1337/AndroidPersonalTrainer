@@ -1,26 +1,36 @@
+package com.example.trainer
+
 import android.content.Context
 import android.util.Log
-import com.example.trainer.R
-import com.example.trainer.WorkoutProgram
 import kotlinx.serialization.decodeFromString
-import java.io.InputStreamReader
-
 import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 
 object JsonUtils {
 
-    fun loadWorkoutPrograms(context: Context): List<WorkoutProgram> {
-        val json = context.resources.openRawResource(R.raw.workout_programs)
-            .bufferedReader()
-            .use { it.readText() }
+    private val client = OkHttpClient()
 
-        return try {
-            val programs = Json.decodeFromString<List<WorkoutProgram>>(json)
-            programs
+    // Функция для загрузки списка программ тренировок с удаленного ресурса
+    fun loadWorkoutPrograms(context: Context, url: String): List<WorkoutProgram> {
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        try {
+            val response: Response = client.newCall(request).execute()
+            if (response.isSuccessful) {
+                // Преобразуем полученный JSON в объект
+                val jsonData = response.body?.string() ?: ""
+                return Json.decodeFromString(jsonData)
+            } else {
+                Log.e("JsonUtils", "Error loading data: ${response.code}")
+                return emptyList()
+            }
         } catch (e: Exception) {
-            Log.e("JsonUtils", "Error loading JSON", e)
-            emptyList()
+            Log.e("JsonUtils", "Exception: ${e.message}")
+            return emptyList()
         }
     }
 }
-
